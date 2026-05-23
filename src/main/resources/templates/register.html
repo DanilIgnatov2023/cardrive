@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация - CarDrive</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        input { width: 100%; padding: 8px; margin: 5px 0 15px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        .error { color: red; }
+        a { display: block; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Регистрация</h2>
+    <p th:if="${error}" class="error" th:text="${error}"></p>
+    <form method="post">
+        <label>Email:</label>
+        <input type="email" name="email" required>
+
+        <label>Пароль:</label>
+        <input type="password" name="password" required>
+
+        <label>Имя:</label>
+        <input type="text" name="name" required>
+
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+    <a href="/login">Уже есть аккаунт? Войти</a>
+</div>
+</body>
+</html>

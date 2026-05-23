@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Дашборд - CarDrive</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { color: #333; }
+        .card { border: 1px solid #ccc; border-radius: 5px; padding: 20px; margin: 20px 0; }
+        button { background: #dc3545; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Добро пожаловать, <span th:text="${#authentication.name}"></span>!</h1>
+    <div class="card">
+        <h2>Ваш автомобильный бюджет</h2>
+        <p>Приложение находится в разработке.</p>
+        <p>✅ Регистрация и вход работают</p>
+        <p>⏳ Следующий шаг: добавление автомобилей и расходов</p>
+    </div>
+    <form method="post" action="/logout">
+        <button type="submit">Выйти</button>
+    </form>
+</div>
+</body>
+</html>

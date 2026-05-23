@@ -1,0 +1,808 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: cardrive
+      comment: "Create users and roles tables"
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+                  constraints:
+                    unique: true
+                    nullable: false
+
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_user_roles_user
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_user_roles_role
+            baseTableName: user_roles
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 2
+      author: cardrive
+      comment: "Insert default roles"
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "ROLE_USER"
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "ROLE_ADMIN"
+
+  - changeSet:
+      id: 3
+      author: cardrive
+      comment: "Create car brands and models tables"
+      changes:
+        - createTable:
+            tableName: car_brands
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: country
+                  type: VARCHAR(100)
+
+        - createTable:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: engine_volume
+                  type: DOUBLE
+              - column:
+                  name: horsepower
+                  type: INT
+              - column:
+                  name: brand_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_car_models_brand
+            baseTableName: car_models
+            baseColumnNames: brand_id
+            referencedTableName: car_brands
+            referencedColumnNames: id
+
+        - createTable:
+            tableName: automobiles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: plate_number
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year
+                  type: INT
+              - column:
+                  name: vin_code
+                  type: VARCHAR(50)
+              - column:
+                  name: start_odometer
+                  type: INT
+              - column:
+                  name: comment
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: brand_id
+                  type: BIGINT
+              - column:
+                  name: model_id
+                  type: BIGINT
+
+        - addForeignKeyConstraint:
+            constraintName: fk_automobiles_user
+            baseTableName: automobiles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_automobiles_brand
+            baseTableName: automobiles
+            baseColumnNames: brand_id
+            referencedTableName: car_brands
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_automobiles_model
+            baseTableName: automobiles
+            baseColumnNames: model_id
+            referencedTableName: car_models
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 4
+      author: cardrive
+      comment: "Create expense categories and expenses tables"
+      changes:
+        - createTable:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: icon
+                  type: VARCHAR(50)
+
+        - createTable:
+            tableName: expense_subcategories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+
+        - addForeignKeyConstraint:
+            constraintName: fk_subcategory_category
+            baseTableName: expense_subcategories
+            baseColumnNames: category_id
+            referencedTableName: expense_categories
+            referencedColumnNames: id
+
+        - createTable:
+            tableName: expenses
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(12,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: odometer
+                  type: INT
+              - column:
+                  name: comment
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: automobile_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subcategory_id
+                  type: BIGINT
+
+        - addForeignKeyConstraint:
+            constraintName: fk_expenses_automobile
+            baseTableName: expenses
+            baseColumnNames: automobile_id
+            referencedTableName: automobiles
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_expenses_category
+            baseTableName: expenses
+            baseColumnNames: category_id
+            referencedTableName: expense_categories
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_expenses_subcategory
+            baseTableName: expenses
+            baseColumnNames: subcategory_id
+            referencedTableName: expense_subcategories
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 5
+      author: cardrive
+      comment: "Insert initial categories and brands data"
+      changes:
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Топливо"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "Страховка"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "Ремонт"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "ТО"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Мойка"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 6
+              - column:
+                  name: name
+                  value: "Парковка"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 7
+              - column:
+                  name: name
+                  value: "Штрафы"
+        - insert:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 8
+              - column:
+                  name: name
+                  value: "Шины"
+
+        - insert:
+            tableName: car_brands
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Toyota"
+              - column:
+                  name: country
+                  value: "Japan"
+        - insert:
+            tableName: car_brands
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "BMW"
+              - column:
+                  name: country
+                  value: "Germany"
+        - insert:
+            tableName: car_brands
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "Mercedes-Benz"
+              - column:
+                  name: country
+                  value: "Germany"
+        - insert:
+            tableName: car_brands
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "Volkswagen"
+              - column:
+                  name: country
+                  value: "Germany"
+
+        - insert:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Camry"
+              - column:
+                  name: brand_id
+                  valueNumeric: 1
+        - insert:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "Corolla"
+              - column:
+                  name: brand_id
+                  valueNumeric: 1
+        - insert:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "X5"
+              - column:
+                  name: brand_id
+                  valueNumeric: 2
+        - insert:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "E-Class"
+              - column:
+                  name: brand_id
+                  valueNumeric: 3
+        - insert:
+            tableName: car_models
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Golf"
+              - column:
+                  name: brand_id
+                  valueNumeric: 4
+  - changeSet:
+      id: 6
+      author: cardrive
+      comment: "Add user relation to expenses for clean Liquibase-created databases"
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: expenses
+              columnName: user_id
+      changes:
+        - addColumn:
+            tableName: expenses
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+        - addForeignKeyConstraint:
+            constraintName: fk_expenses_user
+            baseTableName: expenses
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 7
+      author: cardrive
+      comment: "Add visual fields to expense categories"
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: expense_categories
+              columnName: color
+      changes:
+        - addColumn:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: color
+                  type: VARCHAR(20)
+              - column:
+                  name: is_default
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+
+  - changeSet:
+      id: 8
+      author: cardrive
+      comment: "Fill category icons and colors"
+      changes:
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "⛽"
+              - column:
+                  name: color
+                  value: "#10b981"
+            where: "name = 'Топливо'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🛡️"
+              - column:
+                  name: color
+                  value: "#3b82f6"
+            where: "name = 'Страховка'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🔧"
+              - column:
+                  name: color
+                  value: "#ef4444"
+            where: "name = 'Ремонт'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🧰"
+              - column:
+                  name: color
+                  value: "#f59e0b"
+            where: "name = 'ТО'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🧼"
+              - column:
+                  name: color
+                  value: "#06b6d4"
+            where: "name = 'Мойка'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🅿️"
+              - column:
+                  name: color
+                  value: "#8b5cf6"
+            where: "name = 'Парковка'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "📜"
+              - column:
+                  name: color
+                  value: "#ef4444"
+            where: "name = 'Штрафы'"
+        - update:
+            tableName: expense_categories
+            columns:
+              - column:
+                  name: icon
+                  value: "🛞"
+              - column:
+                  name: color
+                  value: "#6b7280"
+            where: "name = 'Шины'"
+
+  - changeSet:
+      id: 9
+      author: cardrive
+      comment: "Add fuel details to expenses"
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: expenses
+              columnName: fuel_liters
+      changes:
+        - addColumn:
+            tableName: expenses
+            columns:
+              - column:
+                  name: fuel_liters
+                  type: DECIMAL(10,2)
+              - column:
+                  name: fuel_price_per_liter
+                  type: DECIMAL(10,2)
+
+  - changeSet:
+      id: 10
+      author: cardrive
+      comment: "Create category budgets table"
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: category_budgets
+      changes:
+        - createTable:
+            tableName: category_budgets
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: automobile_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: month
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_amount
+                  type: DECIMAL(12,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            constraintName: fk_category_budgets_category
+            baseTableName: category_budgets
+            baseColumnNames: category_id
+            referencedTableName: expense_categories
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            constraintName: fk_category_budgets_automobile
+            baseTableName: category_budgets
+            baseColumnNames: automobile_id
+            referencedTableName: automobiles
+            referencedColumnNames: id
+        - addUniqueConstraint:
+            constraintName: uk_category_budget_auto_category_month
+            tableName: category_budgets
+            columnNames: automobile_id, category_id, year, month
+
+  - changeSet:
+      id: 11
+      author: cardrive
+      comment: "Create notifications table"
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: notifications
+      changes:
+        - createTable:
+            tableName: notifications
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message
+                  type: VARCHAR(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_read
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            constraintName: fk_notifications_user
+            baseTableName: notifications
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
