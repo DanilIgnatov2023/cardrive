@@ -106,4 +106,66 @@ public class NotificationScheduler {
             );
         }
     }
+
+    // НОВЫЙ МЕТОД - для мгновенной проверки после добавления расхода
+    public void checkBudgetsForAutomobileImmediately(Automobile automobile, LocalDate expenseDate) {
+        int year = expenseDate.getYear();
+        int month = expenseDate.getMonthValue();
+
+        // Проверяем общий бюджет
+        monthlyBudgetRepository.findByAutomobileIdAndYearAndMonth(automobile.getId(), year, month)
+                .ifPresent(budget -> {
+                    BigDecimal spent = monthlyBudgetRepository.getSpentAmount(automobile.getId(), year, month);
+                    if (spent == null) {
+                        spent = BigDecimal.ZERO;
+                    }
+                    if (spent.compareTo(budget.getLimitAmount()) > 0) {
+                        notificationService.createNotificationIfNotExists(
+                                automobile.getUser(),
+                                "Превышен общий бюджет",
+                                "Автомобиль " + automobile.getPlateNumber() + ": потрачено " + spent +
+                                        " ₽ при лимите " + budget.getLimitAmount() + " ₽.",
+                                NotificationType.BUDGET_EXCEEDED
+                        );
+                    }
+                });
+
+        // Проверяем категорийные бюджеты
+        List<CategoryBudget> categoryBudgets = categoryBudgetRepository.findByAutomobileIdAndYearAndMonth(
+                automobile.getId(), year, month);
+
+        for (CategoryBudget budget : categoryBudgets) {
+            if (budget.getLimitAmount() == null || budget.getLimitAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            BigDecimal spent = expenseRepository.getSpentAmountByCategory(
+                    automobile.getId(), budget.getCategory().getId(), year, month);
+            if (spent == null) {
+                spent = BigDecimal.ZERO;
+            }
+
+            // Проверяем 80% лимита
+            BigDecimal eightyPercent = budget.getLimitAmount().multiply(BigDecimal.valueOf(0.8));
+            if (spent.compareTo(eightyPercent) >= 0 && spent.compareTo(budget.getLimitAmount()) <= 0) {
+                notificationService.createNotificationIfNotExists(
+                        automobile.getUser(),
+                        "Лимит категории близок",
+                        budget.getCategory().getName() + " по авто " + automobile.getPlateNumber() +
+                                ": потрачено " + spent + " ₽ из " + budget.getLimitAmount() + " ₽.",
+                        NotificationType.CATEGORY_LIMIT
+                );
+            }
+
+            // Проверяем превышение
+            if (spent.compareTo(budget.getLimitAmount()) > 0) {
+                notificationService.createNotificationIfNotExists(
+                        automobile.getUser(),
+                        "Превышен лимит категории",
+                        budget.getCategory().getName() + " по авто " + automobile.getPlateNumber() +
+                                ": потрачено " + spent + " ₽ при лимите " + budget.getLimitAmount() + " ₽.",
+                        NotificationType.CATEGORY_LIMIT
+                );
+            }
+        }
+    }
 }

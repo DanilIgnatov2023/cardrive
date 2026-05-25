@@ -23,15 +23,18 @@ public class ExpenseService {
     private final UserRepository userRepository;
     private final AutomobileRepository automobileRepository;
     private final ExpenseCategoryRepository categoryRepository;
+    private final NotificationScheduler notificationScheduler;
 
     public ExpenseService(ExpenseRepository expenseRepository,
                           UserRepository userRepository,
                           AutomobileRepository automobileRepository,
-                          ExpenseCategoryRepository categoryRepository) {
+                          ExpenseCategoryRepository categoryRepository,
+                          NotificationScheduler notificationScheduler) {
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.automobileRepository = automobileRepository;
         this.categoryRepository = categoryRepository;
+        this.notificationScheduler = notificationScheduler;
     }
 
     private User getCurrentUser() {
@@ -156,6 +159,9 @@ public class ExpenseService {
             automobile.setStartOdometer(request.getOdometer());
             automobileRepository.save(automobile);
         }
+
+        // НЕМЕДЛЕННАЯ ПРОВЕРКА БЮДЖЕТОВ - уведомление придет сразу
+        notificationScheduler.checkBudgetsForAutomobileImmediately(automobile, expense.getDate());
 
         return convertToDTO(savedExpense);
     }

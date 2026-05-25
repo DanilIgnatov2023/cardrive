@@ -1,0 +1,253 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor white
+    BorderColor black
+    ArrowColor #333333
+    FontSize 10
+}
+skinparam package {
+    FontSize 12
+    BackgroundColor #F0F0F0
+    BorderColor #333333
+    FontStyle bold
+}
+skinparam arrow {
+    Thickness 1
+}
+skinparam ranksep 40
+skinparam nodesep 30
+
+title CarDrive
+' ============================================================
+' ПАКЕТ 1: CONTROLLER (REST API) - сверху
+' ============================================================
+package "Controller (REST API)" #E8E8FD {
+
+    together {
+        class AuthController {
+            + POST /api/register
+        }
+
+        class UserController {
+            + GET /api/user/check
+        }
+
+        class AutomobileController {
+            + GET /api/automobiles
+            + POST /api/automobiles
+            + PUT /api/automobiles/{id}
+            + DELETE /api/automobiles/{id}
+        }
+
+        class ExpenseController {
+            + GET /api/expenses
+            + POST /api/expenses
+            + DELETE /api/expenses/{id}
+        }
+    }
+
+    together {
+        class BudgetController {
+            + POST /api/budgets
+            + GET /api/budgets/current
+            + POST /api/budgets/category
+            + GET /api/budgets/category/progress
+        }
+
+        class AnalyticsController {
+            + GET /api/analytics/summary
+            + GET /api/analytics/by-category
+            + GET /api/analytics/monthly
+            + GET /api/analytics/compare
+        }
+
+        class ReminderController {
+            + GET /api/reminders
+            + POST /api/reminders
+            + DELETE /api/reminders/{id}
+        }
+
+        class NotificationController {
+            + GET /api/notifications
+            + PUT /api/notifications/{id}/read
+        }
+    }
+}
+
+' ============================================================
+' ПАКЕТ 2: REPOSITORY (Интерфейсы) - посередине
+' ============================================================
+package "Repository (Интерфейсы)" #FFF4E6 {
+
+    together {
+        interface UserRepository <<JpaRepository>> {
+            + findByEmail(email)
+            + existsByEmail(email)
+        }
+
+        interface AutomobileRepository <<JpaRepository>> {
+            + findByUser(user)
+            + findByUserId(userId)
+        }
+
+        interface ExpenseRepository <<JpaRepository>> {
+            + findByUserIdAndDateBetween()
+            + getTotalExpenses()
+            + getSpentAmountByCategory()
+        }
+
+        interface ReminderRepository <<JpaRepository>> {
+            + findByUserIdAndStatus()
+            + findByStatusAndDueDateBetween()
+        }
+    }
+
+    together {
+        interface NotificationRepository <<JpaRepository>> {
+            + findByUserIdOrderByCreatedAtDesc()
+            + countByUserIdAndIsReadFalse()
+        }
+
+        interface MonthlyBudgetRepository <<JpaRepository>> {
+            + findByAutomobileIdAndYearAndMonth()
+            + getSpentAmount()
+        }
+
+        interface CategoryBudgetRepository <<JpaRepository>> {
+            + findByAutomobileIdAndYearAndMonth()
+        }
+
+        interface CarBrandRepository <<JpaRepository>> {
+            + findByName()
+        }
+
+        interface CarModelRepository <<JpaRepository>> {
+            + findByBrandId()
+        }
+
+        interface ExpenseCategoryRepository <<JpaRepository>> {
+            + findByIsDefaultTrue()
+        }
+    }
+}
+
+' ============================================================
+' ПАКЕТ 3: ENTITY (Сущности) - снизу
+' ============================================================
+package "Entity (Сущности)" #E8F4FD {
+
+    together {
+        class User {
+            - id: Long
+            - email: String
+            - name: String
+            - isActive: Boolean
+        }
+
+        class Automobile {
+            - id: Long
+            - plateNumber: String
+            - year: Integer
+            - startOdometer: Integer
+        }
+
+        class CarBrand {
+            - id: Long
+            - name: String
+            - country: String
+        }
+
+        class CarModel {
+            - id: Long
+            - name: String
+            - engineVolume: Double
+        }
+
+        class Expense {
+            - id: Long
+            - date: LocalDate
+            - amount: BigDecimal
+            - odometer: Integer
+        }
+
+        class ExpenseCategory {
+            - id: Long
+            - name: String
+            - icon: String
+            - color: String
+        }
+    }
+
+    together {
+        class MonthlyBudget {
+            - id: Long
+            - year: Integer
+            - month: Integer
+            - limitAmount: BigDecimal
+        }
+
+        class CategoryBudget {
+            - id: Long
+            - year: Integer
+            - month: Integer
+            - limitAmount: BigDecimal
+        }
+
+        class Reminder {
+            - id: Long
+            - title: String
+            - dueDate: LocalDate
+            - type: String
+            - status: String
+        }
+
+        class Notification {
+            - id: Long
+            - title: String
+            - message: String
+            - isRead: Boolean
+        }
+    }
+}
+
+' ============================================================
+' СВЯЗИ (только вертикальные, сверху вниз)
+' ============================================================
+
+' Контроллеры -> Репозитории
+AuthController -down-> UserRepository
+UserController -down-> UserRepository
+AutomobileController -down-> AutomobileRepository
+ExpenseController -down-> ExpenseRepository
+BudgetController -down-> MonthlyBudgetRepository
+BudgetController -down-> CategoryBudgetRepository
+AnalyticsController -down-> ExpenseRepository
+ReminderController -down-> ReminderRepository
+NotificationController -down-> NotificationRepository
+
+' Репозитории -> Сущности
+UserRepository -down-> User
+AutomobileRepository -down-> Automobile
+ExpenseRepository -down-> Expense
+ReminderRepository -down-> Reminder
+NotificationRepository -down-> Notification
+MonthlyBudgetRepository -down-> MonthlyBudget
+CategoryBudgetRepository -down-> CategoryBudget
+CarBrandRepository -down-> CarBrand
+CarModelRepository -down-> CarModel
+ExpenseCategoryRepository -down-> ExpenseCategory
+
+' ============================================================
+' СВЯЗИ МЕЖДУ СУЩНОСТЯМИ (с кратностями у концов стрелок)
+' ============================================================
+User "1" -[#333333]right-> "0..*" Automobile
+User "1" -[#333333]right-> "0..*" Expense
+Automobile "*" -[#333333]right-> "1" CarBrand
+Automobile "*" -[#333333]down-> "1" CarModel
+Expense "*" -[#333333]left-> "1" ExpenseCategory
+Automobile "1" -[#333333]down-> "0..*" MonthlyBudget
+Automobile "1" -[#333333]down-> "0..*" CategoryBudget
+
+@enduml

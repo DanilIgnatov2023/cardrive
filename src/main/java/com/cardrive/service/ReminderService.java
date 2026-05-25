@@ -22,13 +22,16 @@ public class ReminderService {
     private final ReminderRepository reminderRepository;
     private final UserRepository userRepository;
     private final AutomobileRepository automobileRepository;
+    private final NotificationService notificationService;
 
     public ReminderService(ReminderRepository reminderRepository,
                            UserRepository userRepository,
-                           AutomobileRepository automobileRepository) {
+                           AutomobileRepository automobileRepository,
+                           NotificationService notificationService) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
         this.automobileRepository = automobileRepository;
+        this.notificationService = notificationService;
     }
 
     private User getCurrentUser() {
@@ -86,7 +89,12 @@ public class ReminderService {
             reminder.setAutomobile(automobile);
         }
 
-        return convertToDTO(reminderRepository.save(reminder));
+        Reminder savedReminder = reminderRepository.save(reminder);
+
+        // НЕМЕДЛЕННАЯ ПРОВЕРКА - нужно ли отправить уведомление о напоминании
+        checkAndSendReminderNotification(savedReminder);
+
+        return convertToDTO(savedReminder);
     }
 
     @Transactional
@@ -100,5 +108,31 @@ public class ReminderService {
     @Transactional
     public void deleteReminder(Long id) {
         reminderRepository.deleteById(id);
+    }
+
+    // НОВЫЙ МЕТОД - мгновенная проверка напоминания
+    private void checkAndSendReminderNotification(Reminder reminder) {
+        LocalDate today = LocalDate.now();
+        LocalDate dueDate = reminder.getDueDate();
+        LocalDate inThreeDays = today.plusDays(3);
+
+        // Проверяем, что напоминание в статусе PENDING и дата в ближайшие 3 дня
+        if (reminder.getStatus() == ReminderStatus.PENDING &&
+                !dueDate.isBefore(today) &&
+                !dueDate.isAfter(inThreeDays)) {
+
+            long daysLeft = ChronoUnit.DAYS.between(today, dueDate);
+            String daysMessage = daysLeft == 0 ? "сегодня" :
+                    (daysLeft == 1 ? "завтра" :
+                     "через " + daysLeft + " дня");
+
+            notificationService.createNotificationIfNotExists(
+                    reminder.getUser(),
+                    "Скоро дедлайн: " + reminder.getTitle(),
+                    "Напоминание \"" + reminder.getTitle() + "\" запланировано на " +
+                            reminder.getDueDate() + " (" + daysMessage + ").",
+                    NotificationType.REMINDER_DUE
+            );
+        }
     }
 }
